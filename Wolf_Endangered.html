@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Colorado Wolf Sightings Map</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; padding: 0; font-family: sans-serif; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+    .title {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.85);
+      padding: 10px 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      font-size: 18px;
+      font-weight: bold;
+      z-index: 2;
+    }
+
+    .controls {
+      position: absolute;
+      top: 60px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      z-index: 2;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+
+    .controls label {
+      display: block;
+      margin: 5px 0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+<div class="title">Colorado Wolf Sightings & Reintroduction</div>
+<div class="controls">
+  <label><input type="checkbox" id="toggle-pre2023" checked> Sightings Before 2023</label>
+  <label><input type="checkbox" id="toggle-reintro" checked> 2023 Reintroduction Sites</label>
+  <label><input type="checkbox" id="toggle-post2023" checked> Sightings After 2023</label>
+</div>
+
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiYXBhcnRpbjciLCJhIjoiY203bTd0dHVoMGhwYjJrcTBibTZnMGpieSJ9.pzIW3k-xIA233z5v2hknww';
+
+const map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/mapbox/light-v11',
+  center: [-106, 39.3],
+  zoom: 6.4
+});
+
+map.on('load', () => {
+  const pre2023Sightings = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-106.1, 39.6] },
+        properties: {
+          title: '2020',
+          description: '10 Wolves Spotted in Summit County'
+        }
+      },
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-106.08, 40.12] },
+        properties: {
+          title: '2020',
+          description: '5 Wolves Spotted in Grand County'
+        }
+      },
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-106.32, 40.8] },
+        properties: {
+          title: 'June 4, 2021',
+          description: 'Six pups with F1084 and 2101 — first breeding pair in decades.'
+        }
+      },
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-106.3, 40.7] },
+        properties: {
+          title: 'Jan 19, 2021',
+          description: 'Male gray wolf seen with Snake River wolf in Jackson County (ID: 2101).'
+        }
+      },
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-108.1, 40.6] },
+        properties: {
+          title: 'Jan 6, 2020',
+          description: 'Six wolves confirmed in northern Moffat County.'
+        }
+      },
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-106.4, 40.5] },
+        properties: {
+          title: 'July 8, 2019',
+          description: 'F1084 from Snake River Pack seen in Jackson County.'
+        }
+      },
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-105.17, 38.93] },
+        properties: {
+          title: 'Nov 12, 2018',
+          description: 'Captive Mexican wolf escaped from wildlife center in Divide.'
+        }
+      },
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-106.4, 40.0] },
+        properties: {
+          title: 'April 2015',
+          description: 'Black wolf from WY (935M) tracked in North Park.'
+        }
+      }
+    ]
+  };
+
+  const reintroSites = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-106.36, 39.6] },
+        properties: {
+          title: 'Dec 2023 Reintroduction',
+          description: 'Wolves reintroduced in Eagle County.'
+        }
+      },
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-107.1, 39.3] },
+        properties: {
+          title: 'Dec 2023 Reintroduction',
+          description: 'Wolves reintroduced in Garfield County.'
+        }
+      }
+    ]
+  };
+
+  const post2023Sightings = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-107.5, 39.2] },
+        properties: {
+          title: 'Feb 2024 Sighting',
+          description: 'Wolves observed near Glenwood Springs.'
+        }
+      },
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-106.2, 39.5] },
+        properties: {
+          title: 'Mar 2024 Sighting',
+          description: 'Wolf tracks found near Leadville.'
+        }
+      }
+    ]
+  };
+
+  map.addSource('pre2023', { type: 'geojson', data: pre2023Sightings });
+  map.addSource('reintro', { type: 'geojson', data: reintroSites });
+  map.addSource('post2023', { type: 'geojson', data: post2023Sightings });
+
+  map.addLayer({
+    id: 'pre2023-layer',
+    type: 'circle',
+    source: 'pre2023',
+    paint: {
+      'circle-color': '#1E90FF',
+      'circle-radius': 6,
+      'circle-stroke-width': 1,
+      'circle-stroke-color': '#fff'
+    }
+  });
+
+  map.addLayer({
+    id: 'reintro-layer',
+    type: 'circle',
+    source: 'reintro',
+    paint: {
+      'circle-color': '#2E8B57',
+      'circle-radius': 6,
+      'circle-stroke-width': 1,
+      'circle-stroke-color': '#fff'
+    }
+  });
+
+  map.addLayer({
+    id: 'post2023-layer',
+    type: 'circle',
+    source: 'post2023',
+    paint: {
+      'circle-color': '#FFA500',
+      'circle-radius': 6,
+      'circle-stroke-width': 1,
+      'circle-stroke-color': '#fff'
+    }
+  });
+
+  // Popups
+  ['pre2023', 'reintro', 'post2023'].forEach(source => {
+    map.on('click', `${source}-layer`, (e) => {
+      const coords = e.features[0].geometry.coordinates.slice();
+      const { title, description } = e.features[0].properties;
+      new mapboxgl.Popup()
+        .setLngLat(coords)
+        .setHTML(`<strong>${title}</strong><p>${description}</p>`)
+        .addTo(map);
+    });
+    map.on('mouseenter', `${source}-layer`, () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', `${source}-layer`, () => {
+      map.getCanvas().style.cursor = '';
+    });
+  });
+
+  // Layer toggle controls
+  const toggleLayer = (checkboxId, layerId) => {
+    document.getElementById(checkboxId).addEventListener('change', (e) => {
+      const visibility = e.target.checked ? 'visible' : 'none';
+      map.setLayoutProperty(layerId, 'visibility', visibility);
+    });
+  };
+
+  toggleLayer('toggle-pre2023', 'pre2023-layer');
+  toggleLayer('toggle-reintro', 'reintro-layer');
+  toggleLayer('toggle-post2023', 'post2023-layer');
+});
+</script>
+
+</body>
+</html>
