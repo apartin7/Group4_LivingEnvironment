@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Colorado Recreation & Wildlife Map</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; padding: 0; font-family: sans-serif; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+    .title {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.85);
+      padding: 10px 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      font-size: 18px;
+      font-weight: bold;
+      z-index: 2;
+    }
+
+    .controls {
+      position: absolute;
+      top: 60px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      z-index: 2;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+
+    .controls label {
+      display: block;
+      margin: 5px 0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+<div class="title">Colorado Recreation vs Wildlife Migration</div>
+<div class="controls">
+  <label><input type="checkbox" id="toggle-recreation" checked> Recreation Areas</label>
+  <label><input type="checkbox" id="toggle-elk" checked> Elk Migration</label>
+  <label><input type="checkbox" id="toggle-moose" checked> Moose Migration</label>
+  <label><input type="checkbox" id="toggle-muleDeer" checked> Mule Deer Migration</label>
+</div>
+
+<script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoiYXBhcnRpbjciLCJhIjoiY203bTd0dHVoMGhwYjJrcTBibTZnMGpieSJ9.pzIW3k-xIA233z5v2hknww';
+
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/light-v11',
+    center: [-105.5, 39.2],
+    zoom: 6.4
+  });
+
+  map.on('load', () => {
+    // Recreation Activities
+    map.addSource('recreation', {
+      type: 'vector',
+      url: 'mapbox://apartin7.bwtk8kcm'
+    });
+
+    map.addLayer({
+      id: 'recreation-layer',
+      type: 'circle',
+      source: 'recreation',
+      'source-layer': 'Recreation_Area_Activities_Fe-8sxmek',
+      filter: [
+        "in",
+        "PARENTACTIVITYNAME",
+        "OHV Riding & Camping",
+        "Camping & Cabins",
+        "Horse Riding & Camping"
+      ],
+      paint: {
+        'circle-color': '#000000',
+        'circle-radius': 4
+      }
+    });
+
+    // Migration Layers
+    const migrations = [
+      {
+        id: 'elk',
+        name: 'Elk',
+        color: '#006400',
+        url: 'mapbox://apartin7.a3rred53',
+        sourceLayer: 'CPWSpeciesData-6wvk2q'
+      },
+      {
+        id: 'moose',
+        name: 'Moose',
+        color: '#4682B4',
+        url: 'mapbox://apartin7.43j18xor',
+        sourceLayer: 'Moose_Migration_Patterns-0bt78h'
+      },
+      {
+        id: 'muleDeer',
+        name: 'Mule Deer',
+        color: '#C71585',
+        url: 'mapbox://apartin7.dncxye9h',
+        sourceLayer: 'Mule_Deer_Migration_Patterns-44tlpe'
+      }
+    ];
+
+    migrations.forEach(m => {
+      map.addSource(m.id, {
+        type: 'vector',
+        url: m.url
+      });
+
+      map.addLayer({
+        id: `${m.id}-layer`,
+        type: 'line',
+        source: m.id,
+        'source-layer': m.sourceLayer,
+        paint: {
+          'line-color': m.color,
+          'line-width': 3
+        }
+      });
+    });
+
+    // Toggle visibility
+    const toggleLayer = (checkboxId, layerId) => {
+      document.getElementById(checkboxId).addEventListener('change', (e) => {
+        const visibility = e.target.checked ? 'visible' : 'none';
+        if (map.getLayer(layerId)) {
+          map.setLayoutProperty(layerId, 'visibility', visibility);
+        }
+      });
+    };
+
+    toggleLayer('toggle-recreation', 'recreation-layer');
+    toggleLayer('toggle-elk', 'elk-layer');
+    toggleLayer('toggle-moose', 'moose-layer');
+    toggleLayer('toggle-muleDeer', 'muleDeer-layer');
+  });
+</script>
+
+</body>
+</html>
