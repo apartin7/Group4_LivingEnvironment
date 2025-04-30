@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Colorado Map: Wolverine Habitat & Possible Reintroduction</title>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100%; }
+    .map-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      font-family: sans-serif;
+      z-index: 1;
+    }
+    .map-overlay label {
+      display: block;
+      margin: 5px;
+    }
+    .map-title {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: white;
+      padding: 10px;
+      font-family: sans-serif;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="map-title">
+  <h3>Colorado Map: Wolverine Habitat and Potential Reintroduction Sites</h3>
+</div>
+
+<div id="map"></div>
+<div class="map-overlay">
+  <label><input type="checkbox" id="toggle-recreation" checked> Show Recreation</label>
+  <label><input type="checkbox" id="toggle-wolverine" checked> Show Wolverine Habitat</label>
+  <label><input type="checkbox" id="toggle-reintro-sites" checked> Show Wolverine Reintroduction Sites</label> 
+</div>
+
+<script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoiYXBhcnRpbjciLCJhIjoiY203bTd0dHVoMGhwYjJrcTBibTZnMGpieSJ9.pzIW3k-xIA233z5v2hknww';
+
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/apartin7/cm9u43j2x00ob01rm3ulv1c3w',
+    center: [-105.425, 39.021],
+    zoom: 6.87
+  });
+
+  map.on('load', () => {
+    // --- Wolverine Habitat ---
+    map.addSource('wolverine-habitat', {
+      type: 'vector',
+      url: 'mapbox://apartin7.dlqh65gs'
+    });
+
+    map.addLayer({
+      id: 'wolverine-layer',
+      type: 'fill',
+      source: 'wolverine-habitat',
+      'source-layer': 'Wolverine_Potential_Habitat-4zmwqm',
+      paint: {
+        'fill-color': '#4477aa',
+        'fill-opacity': 0.5,
+        'fill-outline-color': '#000000'
+      }
+    });
+
+    // --- Wolverine Reintroduction Sites (Hypothetical Points) ---
+    map.addSource('wolverine-reintro-sites', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [-106.8, 39.0] },
+            properties: { name: 'Elk Mountains', notes: 'High alpine terrain ideal for reintroduction' }
+          },
+          {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [-107.8, 37.8] },
+            properties: { name: 'San Juan Mountains', notes: 'Large roadless area with persistent snowpack' }
+          },
+          {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [-105.6, 40.3] },
+            properties: { name: 'Rocky Mountain National Park', notes: 'Protected alpine environment' }
+          }
+        ]
+      }
+    });
+
+    map.addLayer({
+      id: 'wolverine-reintro-layer',
+      type: 'circle',
+      source: 'wolverine-reintro-sites',
+      paint: {
+        'circle-color': '#32CD32',
+        'circle-radius': 7,
+        'circle-stroke-width': 1,
+        'circle-stroke-color': '#fff'
+      }
+    });
+
+    // Popup on click
+    map.on('click', 'wolverine-reintro-layer', (e) => {
+      const props = e.features[0].properties;
+      new mapboxgl.Popup()
+        .setLngLat(e.features[0].geometry.coordinates)
+        .setHTML(`<strong>${props.name}</strong><br>${props.notes}`)
+        .addTo(map);
+    });
+
+    map.on('mouseenter', 'wolverine-reintro-layer', () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', 'wolverine-reintro-layer', () => {
+      map.getCanvas().style.cursor = '';
+    });
+
+    // Toggle for Wolverine Reintroduction Sites
+    document.getElementById('toggle-reintro-sites').addEventListener('change', function(e) {
+      const visibility = e.target.checked ? 'visible' : 'none';
+      map.setLayoutProperty('wolverine-reintro-layer', 'visibility', visibility);
+    });
+
+    // --- Recreation Activities ---
+    map.addSource('recreation', {
+      type: 'vector',
+      url: 'mapbox://apartin7.bwtk8kcm'
+    });
+
+    map.addLayer({
+      id: 'recreation-layer',
+      type: 'circle',
+      source: 'recreation',
+      'source-layer': 'Recreation_Area_Activities_Fe-8sxmek',
+      filter: [
+        "in",
+        "PARENTACTIVITYNAME",
+        "OHV Riding & Camping",
+        "Camping & Cabins",
+        "Horse Riding & Camping"
+      ],
+      paint: {
+        'circle-color': '#ff0000',
+        'circle-radius': 6
+      }
+    });
+
+    // Click to inspect recreation features
+    map.on('click', 'recreation-layer', (e) => {
+      const props = e.features[0].properties;
+      alert(`Activity: ${props.PARENTACTIVITYNAME}`);
+    });
+
+    // Toggle visibility
+    document.getElementById('toggle-recreation').addEventListener('change', function(e) {
+      const visibility = e.target.checked ? 'visible' : 'none';
+      map.setLayoutProperty('recreation-layer', 'visibility', visibility);
+    });
+
+    document.getElementById('toggle-wolverine').addEventListener('change', function(e) {
+      const visibility = e.target.checked ? 'visible' : 'none';
+      map.setLayoutProperty('wolverine-layer', 'visibility', visibility);
+    });
+  });
+
+  map.on('error', (e) => {
+    console.error('Map error:', e.error);
+  });
+</script>
+
+</body>
+</html>
